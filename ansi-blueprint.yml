@@ -1,0 +1,39 @@
+---
+  - hosts: appservers
+    become: true
+    roles:
+     - yumpackages
+
+# download jboss binary
+    tasks:
+     - name: Download JBoss
+       shell: aws s3 cp s3://newgoodplace/jboss-eap-7.4.0.zip /home/ec2-user
+    #  - name: Get a specific version of an object.
+    #    amazon.aws.aws_s3:
+    #       bucket: archivalbucket330
+    #       object: /jboss-eap-7.4.0.zip
+    #       dest: /home/ec2-user
+    #       mode: get
+
+# unzip and install jboss binary
+     - name: Extract JBoss
+       shell: unzip -n /home/ec2-user/jboss-eap-7.4.0.zip
+       tags: unzip_jboss_binary
+# configure jboss
+     - name: copy startup files
+       copy:
+        src: files/start-stop.sh
+        dest: /home/ec2-user/jboss-eap-7.4/bin
+        mode: 777
+       tags: copy_startup_scripts
+
+#Deploy Application
+     - name: Deploy application
+       shell: aws s3 cp s3://newgoodplace/demo/sparkjava-hello-world-1.0.war /home/ec2-user/jboss-eap-7.4/standalone/deployments/
+       tags: deploy_application
+
+# Restart jboss
+     - name: Restart JBoss
+       shell: sh /home/ec2-user/jboss-eap-7.4/bin/start-stop.sh stop && sh /home/ec2-user/jboss-eap-7.4/bin/start-stop.sh start &
+       tags: restart_jboss
+
