@@ -1,5 +1,5 @@
 ---
-  - hosts: appservers
+  - hosts: all
     become: true
     roles:
      - yumpackages
